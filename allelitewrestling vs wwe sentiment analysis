@@ -1,0 +1,183 @@
+install.packages("rtweet")
+
+library(rtweet)
+library(dplyr)
+library(tidyr)
+library(tidytext)
+library(ggplot2)
+
+#these keys are not real please commit your own keys
+api_key <- "zNb6asdfrrfcascacuV"
+api_secret_key <- "oajnanscoaismaposmcaodcnaokscijxZ"  
+access_token <- "154036924-ascajdncaoscmaoscnibaydbcaojsc"
+access_token_secret <- "adjcmaojnfuqhunsmmcapojscnapxoksnchebfiasnco"
+
+## authenticate via web browser
+token <- create_token(
+  app = "rwwevsaewsentiment",
+  consumer_key = api_key,
+  consumer_secret = api_secret_key,
+  access_token = access_token,
+  access_secret = access_token_secret)
+
+wwesearch1 <- search_tweets("#WWE",n=100,include_rts = FALSE)
+wwesearch2 <- search_tweets("#WWERAW",n=100,include_rts = FALSE)
+wwesearch3 <- search_tweets("#smackdown",n=100,include_rts = FALSE)
+wwesearch4 <- search_tweets("#nxt",n=100,include_rts = FALSE)
+aewsearch <- search_tweets("#aew",n=100,include_rts = FALSE)
+tweets.wwesearch1 = wwesearch1 %>% select(screen_name,text)
+tweets.wwesearch1
+tweets.wwesearch2 = wwesearch2 %>% select(screen_name,text)
+tweets.wwesearch2
+tweets.wwesearch3 = wwesearch3 %>% select(screen_name,text)
+tweets.wwesearch3
+tweets.wwesearch4 = wwesearch4 %>% select(screen_name,text)
+tweets.wwesearch4
+tweets.aewsearch = aewsearch %>% select(screen_name,text)
+tweets.aewsearch
+
+head(tweets.wwesearch1$text)
+#remove http element for text manually
+tweets.wwesearch1$stripped_text1 <- gsub("http\\S+","",tweets.wwesearch1$text)
+#removing punctuation and coverting all to lower case
+tweets.wwesearch1_stem <- tweets.wwesearch1 %>% 
+  select(stripped_text1) %>% 
+  unnest_tokens(word, stripped_text1)
+head(tweets.wwesearch1_stem)
+cleaned_tweets.wwesearch1 <- tweets.wwesearch1_stem %>%
+  anti_join(stop_words)
+head(tweets.wwesearch1$text)
+
+
+head(tweets.aewsearch$text)
+#remove http element for text manually
+tweets.aewsearch$stripped_text5 <- gsub("http\\S+","",tweets.aewsearch$text)
+#removing punctuation and coverting all to lower case
+tweets.aewsearch_stem <- tweets.aewsearch %>% 
+  select(stripped_text5) %>% 
+  unnest_tokens(word, stripped_text5)
+head(tweets.aewsearch_stem)
+cleaned_tweets.aewsearch <- tweets.aewsearch_stem %>%
+  anti_join(stop_words)
+head(tweets.aewsearch$text)
+
+#top 10 words in #wwe
+cleaned_tweets.wwesearch1 %>%
+  count(word,sort = TRUE) %>%
+  top_n(10) %>%
+  mutate(word = reorder(word,n)) %>%
+  ggplot(aes(x = word, y = n))
+  geom_col()
+  xlab(NULL)
+  coord_flip()
+  theme_classic()
+  labs(x = "Count",
+       y = "Unique words",
+       title = "Unique word count found in #Raw tweets")
+
+#top 10 words in #wweraw
+cleaned_tweets.wwesearch2 %>%
+  count(word,sort = TRUE) %>%
+  top_n(10) %>%
+  mutate(word = reorder(word,n)) %>%
+  ggplot(aes(x = word, y = n))+
+  geom_col()+
+  xlab(NULL)+
+  coord_flip()+
+  theme_classic()+
+  labs(x = "Count",
+       y = "Unique words",
+       title = "Unique word count found in #wweraw tweets")
+
+#top 10 words in #wwe
+cleaned_tweets.wwesearch3 %>%
+  count(word,sort = TRUE) %>%
+  top_n(10) %>%
+  mutate(word = reorder(word,n)) %>%
+  ggplot(aes(x = word, y = n))
+  geom_col()
+  xlab(NULL)
+  coord_flip()
+  theme_classic()
+  labs(x = "Count",
+       y = "Unique words",
+       title = "Unique word count found in #smackdown tweets")
+  
+  
+#top 10 words in #wwe
+cleaned_tweets.wwesearch4 %>%
+  count(word,sort = TRUE) %>%
+  top_n(10) %>%
+  mutate(word = reorder(word,n)) %>%
+  ggplot(aes(x = word, y = n))
+  geom_col()
+  xlab(NULL)
+  coord_flip()
+  theme_classic()
+  labs(x = "Count",
+       y = "Unique words",
+       title = "Unique word count found in #nxt tweets")
+  
+#top 10 words in #aew
+cleaned_tweets.aewsearch %>%
+  count(word,sort = TRUE) %>%
+  top_n(10) %>%
+  mutate(word = reorder(word,n)) %>%
+  ggplot(aes(x = word, y = n))+
+  geom_col()+
+  xlab(NULL)+
+  coord_flip()+
+  theme_classic()+
+  labs(x = "Count",
+       y = "Unique words",
+       title = "Unique word count found in #aew tweets")
+  
+#bing sentiment analysis
+bing_wwesearch1 = cleaned_tweets.wwesearch1 %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word,sentiment, sort = TRUE) %>%
+  ungroup()
+bing_wwesearch1
+result_wwesearch1<- sum(bing_wwesearch1$sentiment$n)
+result_wwesearch1 
+
+bing_wwesearch1 %>%
+   group_by(sentiment) %>%
+   top_n(20) %>%
+   ungroup() %>%
+   mutate(word = reorder(word,n)) %>%
+   ggplot(aes(word,n,fill = sentiment))+ 
+   geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") + 
+  labs(title = "Tweets containing '#raw'",
+        y = "Contribution to sentiment",
+        x = NULL)+
+   coord_flip() + theme_bw()
+
+    
+bing_aewsearch = cleaned_tweets.aewsearch %>%
+ inner_join(get_sentiments("bing")) %>%
+ count(word,sentiment, sort = TRUE) %>%
+ ungroup()
+bing_aewsearch %>%
+  group_by(sentiment) %>%
+  top_n(20) %>%
+  ungroup() %>%
+  mutate(word = reorder(word,n)) %>%
+  ggplot(aes(word,n,fill = sentiment))+ 
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") + 
+  labs(title = "Tweets containing '#aew'",
+       y = "Contribution to sentiment",
+       x = NULL)+
+  coord_flip() + theme_bw()
+
+sentiment_aewsearch_negative = 40
+sentiment_aewsearch_positive = 64
+sentiment_wwesearch1_negative = 29
+sentiment_wwesearch1_positive = 46
+
+overall_sentiment_wwe = sentiment_wwesearch1_positive - sentiment_wwesearch1_negative
+overall_sentiment_aew = sentiment_aewsearch_positive - sentiment_aewsearch_negative
+sentiment_company <- c(overall_sentiment_aew,overall_sentiment_wwe)
+barplot(sentiment_company,xlab = "Company",ylab = "Sentiment score",names.arg = c("AEW","WWE"),col = "darkblue")
